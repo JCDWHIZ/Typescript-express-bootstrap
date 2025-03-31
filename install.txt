@@ -1,0 +1,25 @@
+"npm init -y" - will be used to create a package.json file
+"npm install typescript" - will be used to install typescript
+"npx tsc --init" - will be used to create a tsconfig.json file
+"npm install nodemon" - will be used to install nodemon
+"npm install swagger-autogen swagger-ui-express --save" - will be used to install swagger-autogen and swagger-ui-express
+create a nodemon.json file
+copy the below and include it in your nodemon.json file
+{
+  "watch": ["src"],
+  "ext": "ts",
+  "exec": "ts-node-dev src/index.ts"
+}
+
+"npm i ts-node-dev" will be used to install ts node for typescript compilation
+copy the below
+
+"start": "node dist/index.js",
+"dev": "nodemon",
+"swagger": "ts-node ./src/config/swagger.ts"
+
+add the above to your package.json file in the scripts section
+create your src folder and index.ts file
+
+"npm run swagger" to generate swagger documentation
+"npm run dev" to start your application
