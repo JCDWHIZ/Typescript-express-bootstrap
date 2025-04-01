@@ -1,6 +1,7 @@
-// const express = require("express");
-// import { Router } from "express";
-// const router: Router = express.Router();
+const express = require("express");
+import { Router } from "express";
+const router: Router = express.Router();
+import { sendCustomEmail } from "../controllers/emailController";
 // const {
 //   getAllBlogs,
 //   createBlog,
@@ -13,7 +14,14 @@
 // } = require("../controllers/BlogController");
 // import { authMiddleware } from "../Middleware/authMiddleware";
 
-// router.route("/").get(authMiddleware, getAllBlogs);
+router.route("/").post(async (req, res, next) => {
+  try {
+    await sendCustomEmail(req, res);
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
 // router.route("/").post(authMiddleware, createBlog);
 // router.route("/:id").get(authMiddleware, getBlogbyId);
 // router.route("/:id").put(authMiddleware, updateBlog);
@@ -24,4 +32,4 @@
 //   .route("/:blogId/comment/:commentId/reply")
 //   .post(authMiddleware, replyToComment);
 
-// module.exports = router;
+module.exports = router;
