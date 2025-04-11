@@ -1,35 +1,5 @@
-// export const forgotPassword = async (req: Request, res: Response) => {
-//     const { email } = req.body;
-
 import { Request, Response } from "express";
-import { EmailWithoutButton, sendEmail } from "../config/emailservice";
-
-//     try {
-//       const user = await User.findOne({ email });
-//       if (!user) return res.status(404).json({ message: "User not found" });
-
-//       if (!process.env.CRYPTO_SECRET) return false;
-//       const token = CryptoJS.AES.encrypt(
-//         email,
-//         process.env.CRYPTO_SECRET
-//       ).toString();
-
-//       const resetLink = `${
-//         process.env.FRONTEND_URL
-//       }/auth/set-password/${encodeURIComponent(token)}`;
-
-//       const emailHTML = forgotPasswordEmailTemplate(email, resetLink);
-//       await sendEmail(email, "Password Reset Request", emailHTML);
-
-//       return res
-//         .status(200)
-//         .json({ message: "Password reset email sent successfully." });
-//     } catch (error) {
-//       console.error("Error in forgotPassword:", error);
-//       return res.status(500).json({ message: "Internal server error." });
-//     }
-//   };
-
+import boss from "../config/pgBoss";
 /**
  * @swagger
  * /api/send-custom-email:
@@ -63,7 +33,7 @@ import { EmailWithoutButton, sendEmail } from "../config/emailservice";
  *               description:
  *                 type: string
  *                 description: Content of the email message.
- *               EmailWithButton:
+ *               EmailButton:
  *                 type: boolean
  *                 description: Determines whether to include a button in the email.
  *               buttonLink:
@@ -105,6 +75,41 @@ import { EmailWithoutButton, sendEmail } from "../config/emailservice";
  *                   type: string
  *                   example: "Internal server error."
  */
+// export const sendCustomEmail = async (req: Request, res: Response) => {
+//   const {
+//     email,
+//     title,
+//     schoolName,
+//     buttonLink,
+//     buttonText,
+//     EmailButton,
+//     description,
+//   } = req.body;
+
+//   if (!title || !email || !schoolName || !description) {
+//     return res.status(400).json({ message: "Please fill in all fields" });
+//   }
+
+//   try {
+//     await boss.send("sendCustomEmail", {
+//       email,
+//       title,
+//       schoolName,
+//       description,
+//       buttonLink,
+//       buttonText,
+//       EmailButton,
+//     });
+
+//     return res
+//       .status(200)
+//       .json({ message: "Email job enqueued successfully." });
+//   } catch (error) {
+//     console.error("Error enqueuing email job:", error);
+//     return res.status(500).json({ message: "Failed to enqueue email job." });
+//   }
+// };
+
 export const sendCustomEmail = async (req: Request, res: Response) => {
   const {
     email,
@@ -112,27 +117,38 @@ export const sendCustomEmail = async (req: Request, res: Response) => {
     schoolName,
     buttonLink,
     buttonText,
-    EmailWithButton,
+    EmailButton,
     description,
   } = req.body;
-  try {
-    if (EmailWithButton) {
-      const emailHTML = EmailWithoutButton(title, schoolName, description);
-      await sendEmail(email, title, emailHTML);
-    } else {
-      const emailHTML = EmailWithButton(
-        title,
-        schoolName,
-        buttonLink,
-        description,
-        buttonText
-      );
-      await sendEmail(email, title, emailHTML);
-    }
 
-    return res.status(200).json({ message: "email sent successfully." });
+  if (!title || !email || !schoolName || !description) {
+    return res.status(400).json({ message: "Please fill in all fields" });
+  }
+
+  const queueName = "email-queue";
+
+  try {
+    // First, ensure the queue exists
+    await boss.createQueue(queueName);
+
+    // Then send the job to the queue
+    const jobId = await boss.send(queueName, {
+      email,
+      title,
+      schoolName,
+      description,
+      buttonLink,
+      buttonText,
+      EmailButton,
+    });
+
+    console.log(`Created job ${jobId} in queue ${queueName}`);
+
+    return res
+      .status(200)
+      .json({ message: "Email job enqueued successfully.", jobId });
   } catch (error) {
-    console.error("Error in email:", error);
-    return res.status(500).json({ message: "Internal server error." });
+    console.error("Error enqueuing email job:", error);
+    return res.status(500).json({ message: "Failed to enqueue email job." });
   }
 };

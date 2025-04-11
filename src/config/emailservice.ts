@@ -19,15 +19,21 @@ export const sendEmail = async (to: string, subject: string, html: string) => {
 
   await transporter.sendMail(
     {
-      from: process.env.EMAIL_USERNAME,
+      from: process.env.EMAIL_USER,
       to,
       subject,
       html,
     },
-    (error, info) => {
+    (error) => {
       if (error) {
-        console.log(error);
-        console.log(process.env.EMAIL_PASSWORD, process.env.EMAIL_USERNAME);
+        console.error("Error sending email:", error);
+        console.error("Email details:", { to, subject, html });
+        console.error("Environment variables:", {
+          EMAIL_USER: process.env.EMAIL_USER,
+          EMAIL_PASSWORD: process.env.EMAIL_PASSWORD,
+        });
+      } else {
+        console.log("Email sent successfully to:", to);
       }
     }
   );
